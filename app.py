@@ -1,33 +1,41 @@
-from flask import Flask, render_template, request
-from sklearn.feature_extraction.text import CountVectorizer
-from sklearn.naive_bayes import MultinomialNB
+from flask import Flask, render_template, request, jsonify
 import pickle
 
 app = Flask(__name__)
 
-with open('model.pkl', 'rb') as f:
+with open('./data/model.pkl', 'rb') as f:
     model = pickle.load(f)
 
-with open('vectorizer.pkl', 'rb') as f:
+with open('./data/vectorizer.pkl', 'rb') as f:
     vectorizer = pickle.load(f)
 
 def analyze(str):
-    vec = vectorizer.transform(str)
+    if not str:
+        print("DEBUG: None")
+        return "none", "bg-dark"
+    
+    vec = vectorizer.transform([str])
     y_pred = model.predict(vec)
 
     if y_pred[0] == 2:
-        print("Sentiment: Negative")
+        print("DEBUG: Negative")
+        return "negative", "bg-danger"
     elif y_pred[0] == 1:
-        print("Sentiment: Positive")
+        print("DEBUG: Positive")
+        return "positive", "bg-success"
     else:
-        print("Sentiment: Neutral")
+        print("DEBUG: Neutral")
+        return "neutral", "bg-dark"
+    
+@app.route('/analyze', methods=['POST'])
+def analyze_sentiment():
+    msg = request.json.get('msg')
+    sentiment, body_color = analyze(msg)
+    return jsonify({'sentiment': sentiment, 'body_color': body_color})
 
-@app.route('/', methods=['GET', 'POST'])
+@app.route('/', methods=['POST', 'GET'])
 def home():
-    if request.method == 'POST':
-        msg = request.form.get('msg')
-        analyze([msg])
-    return render_template("base.html")
+    return render_template('base.html')
 
 if __name__ == '__main__':
     app.run(debug=True, port=8000)

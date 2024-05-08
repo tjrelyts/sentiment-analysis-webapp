@@ -33,8 +33,8 @@ y_pred = model.predict(X_test)
 acc = accuracy(y_test, y_pred)
 print("Accuracy:", acc)
 
-with open('model.pkl', 'wb') as f:
+with open('./data/model.pkl', 'wb') as f:
     pickle.dump(model, f)
 
-with open('vectorizer.pkl', 'wb') as f:
+with open('./data/vectorizer.pkl', 'wb') as f:
     pickle.dump(vectorizer, f)
