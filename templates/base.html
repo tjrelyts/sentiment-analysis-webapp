@@ -32,6 +32,7 @@
             name="msg"
             placeholder="Enter any message."
             id="msg"
+            maxlength="100"
           ></textarea>
         </div>
         <button
@@ -43,8 +44,15 @@
         </button>
       </form>
     </div>
+    <h1 class="fs-1 text-light text-center mt-5">RESULT</h1>
+    <p class="fs-1 text-light text-center" id="sentiment-result"></p>
     <div class="container fixed-bottom py-5">
-      <h1 class="fs-2 text-light">Message History</h1>
+      <span class="d-flex"
+        ><h1 class="fs-2 text-light">Message History</h1>
+        <button type="button" class="btn btn-primary mx-5" id="clear-btn">
+          Clear History
+        </button></span
+      >
       <ul class="list-group list-group-flush" id="message-history"></ul>
     </div>
     <script

@@ -1,12 +1,13 @@
 from flask import Flask, render_template, request, jsonify
+import os
 import pickle
 
 app = Flask(__name__)
 
-with open('./data/model.pkl', 'rb') as f:
+with open(os.path.abspath('data/model.pkl'), 'rb') as f:
     model = pickle.load(f)
 
-with open('./data/vectorizer.pkl', 'rb') as f:
+with open(os.path.abspath('data/vectorizer.pkl'), 'rb') as f:
     vectorizer = pickle.load(f)
 
 def analyze(str):

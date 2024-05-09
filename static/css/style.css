@@ -1,3 +1,23 @@
 textarea {
   resize: none;
 }
+
+#message,
+#analysis,
+#timestamp {
+  width: calc(33.33% - 10px); /* Adjusted width to account for margins */
+  word-wrap: break-word;
+  flex: 1;
+}
+
+#message {
+  text-align: left; /* Aligns message text to the left */
+}
+
+#analysis {
+  text-align: center; /* Aligns analysis text to the center */
+}
+
+#timestamp {
+  text-align: right; /* Aligns timestamp text to the right */
+}

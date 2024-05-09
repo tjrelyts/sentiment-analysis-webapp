@@ -1,79 +1,83 @@
-document.addEventListener("DOMContentLoaded", function () {
-  const form = document.getElementById("sentiment-form");
-  const messageHistory = document.getElementById("message-history");
-  const maxMessages = 10; // Change this to set the maximum number of messages
+const form = document.getElementById("sentiment-form");
+const clearButton = document.getElementById("clear-btn");
+const messageHistory = document.getElementById("message-history");
+const maxMessages = 5;
 
-  // Function to load messages from local storage
+document.addEventListener("DOMContentLoaded", function () {
   function loadMessages() {
     const messages = JSON.parse(localStorage.getItem("messages")) || [];
     messages.forEach((item) => {
-      const listItem = createMessageItem(item.message, item.timestamp);
+      const listItem = createMessageItem(
+        item.message,
+        item.analysis,
+        item.timestamp
+      );
       messageHistory.appendChild(listItem);
     });
   }
 
-  // Load messages when the page is loaded
   loadMessages();
 
-  // Function to create a list item for a message
-  function createMessageItem(message, timestamp) {
+  function createMessageItem(message, analysis, timestamp) {
     const listItem = document.createElement("li");
     listItem.className = "list-group-item d-flex justify-content-between";
 
     const messageDiv = document.createElement("div");
+    messageDiv.id = "message";
     messageDiv.textContent = message;
 
+    const analysisDiv = document.createElement("div");
+    analysisDiv.id = "analysis";
+    analysisDiv.textContent = analysis;
+
     const timestampDiv = document.createElement("div");
+    timestampDiv.id = "timestamp";
     timestampDiv.textContent = new Date(timestamp).toLocaleString();
 
     listItem.appendChild(messageDiv);
+    listItem.appendChild(analysisDiv);
     listItem.appendChild(timestampDiv);
 
     return listItem;
   }
 
   form.addEventListener("submit", function (event) {
-    event.preventDefault(); // Prevent form submission
+    event.preventDefault();
 
     const msgInput = document.getElementById("msg");
-    const message = msgInput.value.trim(); // Get the trimmed message value
+    const message = msgInput.value.trim();
 
     if (message !== "") {
-      // Only add message if it's not empty
-      const timestamp = Date.now(); // Get current timestamp
+      analyzeSentiment(message, (sentiment) => {
+        const timestamp = Date.now();
+        const listItem = createMessageItem(message, sentiment, timestamp);
+        messageHistory.appendChild(listItem);
 
-      const listItem = createMessageItem(message, timestamp);
-      messageHistory.appendChild(listItem);
+        if (messageHistory.children.length > maxMessages) {
+          messageHistory.removeChild(messageHistory.children[0]);
+        }
 
-      // Remove the oldest message if the maximum limit is reached
-      if (messageHistory.children.length > maxMessages) {
-        messageHistory.removeChild(messageHistory.children[0]); // Remove the first (oldest) message
-      }
+        const messages = Array.from(messageHistory.children).map((child) => {
+          return {
+            message: child.children[0].textContent,
+            analysis: child.children[1].textContent,
+            timestamp: new Date(child.children[2].textContent).getTime(),
+          };
+        });
+        localStorage.setItem("messages", JSON.stringify(messages));
 
-      // Store messages in local storage
-      const messages = Array.from(messageHistory.children).map((child) => {
-        return {
-          message: child.children[0].textContent,
-          timestamp: new Date(child.children[1].textContent).getTime(),
-        };
+        msgInput.value = "";
       });
-      localStorage.setItem("messages", JSON.stringify(messages));
-
-      // Clear the input field after adding the message
-      msgInput.value = "";
     }
+  });
+
+  clearButton.addEventListener("click", function () {
+    localStorage.clear();
+    messageHistory.innerHTML = "";
   });
 });
 
-function handleSubmit(event) {
-  event.preventDefault();
-  let message = document.getElementById("msg").value.trim();
-  if (message) {
-    analyzeSentiment(message);
-  }
-}
-
-function analyzeSentiment(message) {
+function analyzeSentiment(message, callback) {
   fetch("/analyze", {
     method: "POST",
     headers: {
@@ -83,7 +87,7 @@ function analyzeSentiment(message) {
   })
     .then((response) => response.json())
     .then((data) => {
-      console.log(data.sentiment);
+      callback(data.sentiment);
       updatePage(data.sentiment);
     })
     .catch((error) => console.error("Error:", error));
@@ -92,26 +96,42 @@ function analyzeSentiment(message) {
 function updatePage(sentiment) {
   let body = document.querySelector("body");
   let icon = document.querySelector('link[rel="icon"]');
+  let result = document.getElementById("sentiment-result");
 
   switch (sentiment) {
     case "positive":
       body.classList.remove("bg-dark", "bg-danger");
       body.classList.add("bg-success");
       icon.href = "/static/assets/favicon1.ico";
+      result.textContent = "Positive";
       break;
     case "negative":
       body.classList.remove("bg-dark", "bg-success");
       body.classList.add("bg-danger");
       icon.href = "/static/assets/favicon2.ico";
+      result.textContent = "Negative";
       break;
     default:
       body.classList.remove("bg-danger", "bg-success");
       body.classList.add("bg-dark");
       icon.href = "/static/assets/favicon0.ico";
+      result.textContent = "Neutral";
       break;
   }
 }
 
-document
-  .getElementById("sentiment-form")
-  .addEventListener("submit", handleSubmit);
+function setCharacterLimit() {
+  const windowWidth = window.innerWidth;
+  const msgInput = document.getElementById("msg");
+
+  if (windowWidth <= 768) {
+    msgInput.setAttribute("maxlength", "40");
+    clearButton.click();
+  } else {
+    msgInput.setAttribute("maxlength", "100");
+  }
+}
+
+setCharacterLimit();
+
+window.addEventListener("resize", setCharacterLimit);
